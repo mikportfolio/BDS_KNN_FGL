@@ -1,0 +1,78 @@
+---
+title: "KNN_ForensicGlass_241026"
+author: "Ahmad Mudrik"
+date: "2024-10-26"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Forensic Glass KNN Model
+
+## Introduction
+The data set presents measurement of the refractive index (RI), and the chemical composition (in weight percentages) of oxide elements Na, Mg, Al, Si, K, Ca, Ba, and Fe. This information is used for as input for the task of predicting six possible glass types: 
+(a) WinF: Float glass window
+(b) WinNF: Non-float glass window
+(c) Veh: Vehicle window
+(d) Con: Container (bottles)
+(e) Tabl: Tableware
+(f) Head: Vehicle headlamp
+
+## Hypothesis
+1. The predicted y_f changes with different K-values
+
+## Objective
+1. To run **1-NN and 5-NN* algorithms using random sample of "test" observations
+
+## Install packages, import and inspect data set
+
+### Import dataset
+```{r}
+library(MASS) ## a library of example data sets
+data(fgl) ## loads the data into R
+head(fgl)
+```
+- the *forensic glass* - fgl data set was obtained from the "MASS" library
+- The data includes measurements for each of the 214 glass shards
+
+### Inspect data
+```{r, echo=FALSE}
+par(mfrow=c(2,3))
+plot(RI ~ type, data=fgl, col=c(grey(.2),2:6))
+plot(Al ~ type, data=fgl, col=c(grey(.2),2:6))
+plot(Na ~ type, data=fgl, col=c(grey(.2),2:6))
+plot(Mg ~ type, data=fgl, col=c(grey(.2),2:6))
+plot(Ba ~ type, data=fgl, col=c(grey(.2),2:6))
+plot(Si ~ type, data=fgl, col=c(grey(.2),2:6))
+```
+ - Some of the inputs are clear discriminators, e.g Barium (Ba) is generally present in small amounts except for headlamps, where it is relatively abundant.
+- Magnsium (Mg) is common for windows of all types - in houses and in vehicles.
+- Other inputs are more subtle discriminators, or may matter only in interaction.
+
+### Standardize data
+```{r}
+x <- scale(fgl[,1:9]) # convert columns to mean-zero sd-one
+apply(x,2,sd) # validate standardization
+```
+- Before KNN algorithm is applied, the data must be standardized.
+- Standardization is a scaling method, where the values are centered around mean with a unit standard deviation.
+- "scale()" function is used to scale the data set to obtain standard deviation = 1.
+- validation can be made using the "apply()" function, using data set "x", margin = 2 indicating field, and apply function "sd"  for standard deviation.
+
+
+## Study 1: Find the nearest neighbours
+```{r}
+library(class)
+test <- sample(1:214,10) # picks 10 samples out of 214 rows
+nearest1 <- knn(train=x[-test,], test=x[test,], cl=fgl$type[-test], k=1)
+nearest5 <- knn(train=x[-test,], test=x[test,], cl=fgl$type[-test], k=5)
+data.frame(fgl$type[test],nearest1,nearest5)
+```
+
+### Findings from Study 1
+- 1-NN and 5-NN algorithms were ran, where a random sample of *test* observation are left out for prediction.
+- 1-NN obtained 80% accuracy, 5-NN obtains 70%
+- However, if both algorithm is re-run on random test sets, the numbers constantly shifts,
+- It can deduced that K-NN predictions will be unstable as a function of K. The predicted y_f also changes with each of these different K.
+- The instability of prediction makes it hard to choose the optimal K, and hence cross validation does not work well for KNN.
+
